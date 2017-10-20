@@ -1,3 +1,4 @@
+import { Observable } from 'rxjs/Rx';
 import { Component, OnInit } from '@angular/core';
 import { FormArray, FormControl, FormGroup, Validators } from '@angular/forms';
 
@@ -14,20 +15,45 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     this.signupForm = new FormGroup({
       'userData': new FormGroup({
-        'username': new FormControl(null, [
-          Validators.required,
-          this.forbiddenNames.bind(this)
-        ]),
-        'email': new FormControl(null, [ Validators.required,
-          Validators.email ])
+        'username': new FormControl(null,
+          [ Validators.required, this.forbiddenNames.bind(this) ]
+        ),
+        'email': new FormControl(null,
+          [ Validators.required, Validators.email ],
+          this.forbiddenEmails.bind(this)
+        )
       }),
       'gender': new FormControl('male'),
       'hobbies': new FormArray([])
+    });
+
+    // this.signupForm.valueChanges.subscribe(
+    //   (value) => console.log(value)
+    // );
+
+    this.signupForm.statusChanges.subscribe(
+      (status) => console.log(status)
+    );
+
+    this.signupForm.setValue({
+      'userData': {
+        'username': 'Rafael',
+        'email': 'rafael@test.com'
+      },
+      'gender': 'male',
+      'hobbies': []
+    });
+
+    this.signupForm.patchValue({
+      'userData': {
+        'username': 'Anna' // it doesn`t run validators
+      }
     });
   }
 
   onSubmit() {
     console.log(this.signupForm);
+    this.signupForm.reset();
   }
 
   onAddHobby() {
@@ -40,5 +66,18 @@ export class AppComponent implements OnInit {
       return {'nameIsForbidden': true};
     }
     return null;
+  }
+
+  forbiddenEmails(control: FormControl): Promise<any> | Observable<any> {
+    const promise = new Promise<any>((resolve, reject) => {
+      setTimeout(() => {
+        if (control.value == 'test@test.com') {
+          resolve({ 'emailIsForbidden': true });
+        } else {
+          resolve(null);
+        }
+      }, 1500);
+    });
+    return promise;
   }
 }
